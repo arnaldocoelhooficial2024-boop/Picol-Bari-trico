@@ -21,6 +21,11 @@ export function Login() {
     setSuccessMessage(null);
 
     try {
+      // Check if using placeholder key
+      if (import.meta.env.VITE_SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY' || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase não configurado. Por favor, configure as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no painel de Secrets.');
+      }
+
       const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
@@ -30,7 +35,11 @@ export function Login() {
       navigate('/');
     } catch (err: any) {
       console.error('Login error:', err);
-      setError('E-mail ou senha incorretos. Se for seu primeiro acesso, clique em "Primeiro acesso / Criar senha".');
+      if (err.message?.includes('Supabase não configurado') || err.message?.includes('Invalid API key')) {
+        setError('Erro de configuração: As chaves do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não foram configuradas corretamente no painel de Secrets.');
+      } else {
+        setError('E-mail ou senha incorretos. Se for seu primeiro acesso, clique em "Primeiro acesso / Criar senha".');
+      }
     } finally {
       setIsLoading(false);
     }
@@ -47,6 +56,11 @@ export function Login() {
     setSuccessMessage(null);
 
     try {
+      // Check if using placeholder key
+      if (import.meta.env.VITE_SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY' || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase não configurado. Por favor, configure as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no painel de Secrets.');
+      }
+
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
         redirectTo: `${window.location.origin}/reset-password`,
       });
@@ -56,7 +70,11 @@ export function Login() {
       setSuccessMessage('Enviamos um link para seu e-mail. Acesse sua caixa de entrada para criar sua senha.');
     } catch (err: any) {
       console.error('Reset password error:', err);
-      setError(err.message || 'Erro ao enviar e-mail de recuperação. Verifique se o e-mail está correto.');
+      if (err.message?.includes('Supabase não configurado') || err.message?.includes('Invalid API key')) {
+        setError('Erro de configuração: As chaves do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não foram configuradas corretamente no painel de Secrets.');
+      } else {
+        setError(err.message || 'Erro ao enviar e-mail de recuperação. Verifique se o e-mail está correto.');
+      }
     } finally {
       setIsResetting(false);
     }

@@ -1,8 +1,9 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useNavigate } from 'react-router-dom';
-import { ArrowRight, ArrowLeft, Check, Target, Scale, Ruler, Activity, Heart, Coffee, Moon, Frown } from 'lucide-react';
+import { ArrowRight, ArrowLeft, Check, Target, Scale, Ruler, Activity, Heart, Coffee, Moon, Frown, Loader2 } from 'lucide-react';
 import { Logo } from '../components/Logo';
+import { supabase } from '../lib/supabase';
 
 const steps = [
   { id: 'welcome', title: 'Bem-vinda' },
@@ -15,6 +16,7 @@ const steps = [
 export function Onboarding() {
   const navigate = useNavigate();
   const [currentStep, setCurrentStep] = useState(0);
+  const [isSaving, setIsSaving] = useState(false);
   const [formData, setFormData] = useState({
     name: '',
     goal: '',
@@ -23,6 +25,17 @@ export function Onboarding() {
     height: '',
     goalWeight: ''
   });
+
+  useEffect(() => {
+    // Pre-fill name if available from auth metadata
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (user?.user_metadata?.name) {
+        setFormData(prev => ({ ...prev, name: user.user_metadata.name }));
+      }
+    };
+    fetchUser();
+  }, []);
 
   const handleNext = () => {
     if (currentStep < steps.length - 1) {
@@ -38,23 +51,55 @@ export function Onboarding() {
     }
   };
 
-  const finishOnboarding = () => {
-    // Save data
-    const user = JSON.parse(localStorage.getItem('gm_user') || '{}');
-    user.name = formData.name || user.name || 'Vencedora';
-    user.goal = formData.goal;
-    user.challenge = formData.challenge;
-    localStorage.setItem('gm_user', JSON.stringify(user));
-    
-    if (formData.weight) {
-      const today = new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' });
-      localStorage.setItem('gm_weight_history', JSON.stringify([{ date: today, weight: parseFloat(formData.weight) }]));
+  const finishOnboarding = async () => {
+    setIsSaving(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      
+      if (!user) throw new Error('Usuário não autenticado');
+
+      // 1. Salvar no user_profiles
+      const { error: profileError } = await supabase
+        .from('user_profiles')
+        .upsert({
+          id: user.id,
+          nome: formData.name || 'Vencedora',
+          desafio_principal: formData.challenge,
+          peso_inicial: formData.weight ? parseFloat(formData.weight) : null,
+          peso_meta: formData.goalWeight ? parseFloat(formData.goalWeight) : null,
+          updated_at: new Date().toISOString()
+        }, { onConflict: 'id' });
+
+      if (profileError) throw profileError;
+
+      // 2. Salvar o primeiro peso no weight_logs
+      if (formData.weight) {
+        const { error: weightError } = await supabase
+          .from('weight_logs')
+          .insert({
+            user_id: user.id,
+            peso: parseFloat(formData.weight),
+            data_registro: new Date().toISOString().split('T')[0]
+          });
+          
+        if (weightError) console.error('Erro ao salvar peso inicial:', weightError);
+      }
+
+      // Fallback local para altura (já que não tem na tabela profile, ou podemos adicionar depois)
+      if (formData.height) localStorage.setItem('gm_height', formData.height);
+      
+      // Marca como concluído localmente para não repetir
+      localStorage.setItem('gm_onboarding_completed', 'true');
+      
+      navigate('/');
+    } catch (error) {
+      console.error('Erro ao salvar onboarding:', error);
+      // Fallback local em caso de erro
+      localStorage.setItem('gm_onboarding_completed', 'true');
+      navigate('/');
+    } finally {
+      setIsSaving(false);
     }
-    if (formData.height) localStorage.setItem('gm_height', formData.height);
-    if (formData.goalWeight) localStorage.setItem('gm_goal_weight', formData.goalWeight);
-    
-    localStorage.setItem('gm_onboarding_completed', 'true');
-    navigate('/');
   };
 
   const renderStep = () => {
@@ -236,10 +281,14 @@ export function Onboarding() {
                   finishOnboarding();
                 }, 3000);
               }}
-              disabled={!formData.weight || !formData.height || !formData.goalWeight}
+              disabled={!formData.weight || !formData.height || !formData.goalWeight || isSaving}
               className="w-full bg-brand-600 text-white py-4 rounded-2xl font-bold flex items-center justify-center gap-2 hover:bg-brand-700 transition-all disabled:opacity-50 disabled:cursor-not-allowed shadow-lg shadow-brand-600/20 mt-8"
             >
-              Finalizar <Check size={20} />
+              {isSaving ? (
+                <><Loader2 size={20} className="animate-spin" /> Salvando...</>
+              ) : (
+                <>Finalizar <Check size={20} /></>
+              )}
             </button>
           </motion.div>
         );

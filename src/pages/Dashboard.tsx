@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { CheckCircle2, Flame, Trophy, ChevronRight, Sparkles, Target, Scale, ShieldAlert } from 'lucide-react';
+import { CheckCircle2, Flame, Trophy, ChevronRight, Sparkles, Target, Scale, ShieldAlert, Loader2 } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
+import { supabase } from '../lib/supabase';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -20,6 +21,7 @@ const itemVariants = {
 
 export function Dashboard() {
   const navigate = useNavigate();
+  const [isLoading, setIsLoading] = useState(true);
   const [progress, setProgress] = useState(0);
   const [streak, setStreak] = useState(0);
   const [currentWeight, setCurrentWeight] = useState<number | null>(null);
@@ -27,77 +29,145 @@ export function Dashboard() {
   const [height, setHeight] = useState<number | null>(null);
   const [userName, setUserName] = useState('Vencedora');
   const [challenge, setChallenge] = useState<string | null>(null);
+  const [hasCheckedInToday, setHasCheckedInToday] = useState(false);
+  const [isCheckingIn, setIsCheckingIn] = useState(false);
 
   useEffect(() => {
-    const onboardingCompleted = localStorage.getItem('gm_onboarding_completed');
-    if (!onboardingCompleted) {
-      navigate('/onboarding');
-      return;
-    }
-
-    const savedUser = localStorage.getItem('gm_user');
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser);
-      if (parsedUser.name) setUserName(parsedUser.name);
-      if (parsedUser.challenge) setChallenge(parsedUser.challenge);
-    }
-
-    const savedCompleted = localStorage.getItem('completedDays');
-    if (savedCompleted) {
-      const completedArray = JSON.parse(savedCompleted);
-      setProgress(completedArray.length);
-      
-      let currentStreak = 0;
-      for (let i = 1; i <= 30; i++) {
-        if (completedArray.includes(i)) {
-          currentStreak++;
-        } else {
-          break;
+    const fetchData = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          navigate('/login');
+          return;
         }
-      }
-      setStreak(currentStreak);
-    }
 
-    // Health data
-    const savedHistory = localStorage.getItem('gm_weight_history');
-    if (savedHistory) {
-      const history = JSON.parse(savedHistory);
-      if (history.length > 0) {
-        setCurrentWeight(history[history.length - 1].weight);
-      }
-    }
-    
-    const savedGoal = localStorage.getItem('gm_goal_weight');
-    if (savedGoal) setGoalWeight(parseFloat(savedGoal));
+        // Fetch User Profile
+        const { data: profile } = await supabase
+          .from('user_profiles')
+          .select('*')
+          .eq('id', user.id)
+          .single();
 
-    const savedHeight = localStorage.getItem('gm_height');
-    if (savedHeight) setHeight(parseFloat(savedHeight));
-  }, []);
-
-  const handleCheckIn = () => {
-    const savedCompleted = localStorage.getItem('completedDays');
-    let completedArray: number[] = savedCompleted ? JSON.parse(savedCompleted) : [];
-    
-    // Find the first uncompleted day
-    let nextDay = 1;
-    while (completedArray.includes(nextDay) && nextDay <= 30) {
-      nextDay++;
-    }
-
-    if (nextDay <= 30) {
-      completedArray.push(nextDay);
-      localStorage.setItem('completedDays', JSON.stringify(completedArray));
-      setProgress(completedArray.length);
-      
-      let currentStreak = 0;
-      for (let i = 1; i <= 30; i++) {
-        if (completedArray.includes(i)) {
-          currentStreak++;
+        if (profile) {
+          setUserName(profile.nome || 'Vencedora');
+          setChallenge(profile.desafio_principal);
+          setGoalWeight(profile.peso_meta);
+          // Fallback to local storage if onboarding not completed in DB
+          localStorage.setItem('gm_onboarding_completed', 'true');
         } else {
-          break;
+          // If no profile, they might need onboarding
+          const onboardingCompleted = localStorage.getItem('gm_onboarding_completed');
+          if (!onboardingCompleted) {
+            navigate('/onboarding');
+            return;
+          }
         }
+
+        // Fetch Weight Logs
+        const { data: weightLogs } = await supabase
+          .from('weight_logs')
+          .select('peso')
+          .eq('user_id', user.id)
+          .order('data_registro', { ascending: false })
+          .limit(1);
+
+        if (weightLogs && weightLogs.length > 0) {
+          setCurrentWeight(weightLogs[0].peso);
+        }
+
+        // Fetch Daily Tracking for progress and streak
+        const { data: trackingLogs } = await supabase
+          .from('daily_tracking')
+          .select('data_registro')
+          .eq('user_id', user.id)
+          .order('data_registro', { ascending: false });
+
+        if (trackingLogs) {
+          setProgress(trackingLogs.length);
+          
+          // Calculate streak
+          let currentStreak = 0;
+          const today = new Date().toISOString().split('T')[0];
+          const yesterday = new Date(Date.now() - 86400000).toISOString().split('T')[0];
+          
+          let hasToday = false;
+          let hasYesterday = false;
+
+          const dates = trackingLogs.map(log => log.data_registro);
+          
+          if (dates.includes(today)) {
+            hasToday = true;
+            setHasCheckedInToday(true);
+          }
+          if (dates.includes(yesterday)) {
+            hasYesterday = true;
+          }
+
+          if (hasToday || hasYesterday) {
+            currentStreak = 1;
+            let checkDate = new Date(hasToday ? today : yesterday);
+            
+            for (let i = 1; i < dates.length; i++) {
+              checkDate.setDate(checkDate.getDate() - 1);
+              const checkDateString = checkDate.toISOString().split('T')[0];
+              if (dates.includes(checkDateString)) {
+                currentStreak++;
+              } else {
+                break;
+              }
+            }
+          }
+          setStreak(currentStreak);
+        }
+
+        // Local height fallback
+        const savedHeight = localStorage.getItem('gm_height');
+        if (savedHeight) setHeight(parseFloat(savedHeight));
+
+      } catch (error) {
+        console.error('Erro ao buscar dados do dashboard:', error);
+      } finally {
+        setIsLoading(false);
       }
-      setStreak(currentStreak);
+    };
+
+    fetchData();
+  }, [navigate]);
+
+  const handleCheckIn = async () => {
+    if (hasCheckedInToday || isCheckingIn) return;
+    
+    setIsCheckingIn(true);
+    try {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) return;
+
+      const today = new Date().toISOString().split('T')[0];
+
+      const { error } = await supabase
+        .from('daily_tracking')
+        .insert({
+          user_id: user.id,
+          data_registro: today,
+          consumiu_picole: true
+        });
+
+      if (error) {
+        if (error.code === '23505') { // Unique violation
+          setHasCheckedInToday(true);
+        } else {
+          throw error;
+        }
+      } else {
+        setHasCheckedInToday(true);
+        setProgress(prev => prev + 1);
+        setStreak(prev => prev + (streak === 0 ? 1 : (hasCheckedInToday ? 0 : 1))); // Simple streak update
+      }
+    } catch (error) {
+      console.error('Erro ao fazer check-in:', error);
+    } finally {
+      setIsCheckingIn(false);
     }
   };
 
@@ -147,6 +217,14 @@ export function Dashboard() {
   };
 
   const tip = getPersonalizedTip();
+  
+  if (isLoading) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-slate-900">
+        <Loader2 className="w-8 h-8 animate-spin text-brand-500" />
+      </div>
+    );
+  }
 
   return (
     <motion.div 
@@ -288,14 +366,28 @@ export function Dashboard() {
           whileHover={{ scale: 1.02 }}
           whileTap={{ scale: 0.98 }}
           onClick={handleCheckIn}
-          disabled={progress >= 30}
-          className="bg-white dark:bg-slate-800 border border-slate-100 dark:border-slate-700 p-6 rounded-[2rem] flex flex-col items-center justify-center gap-4 shadow-sm hover:border-brand-200 dark:hover:border-brand-700 hover:shadow-md transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
+          disabled={progress >= 30 || hasCheckedInToday || isCheckingIn}
+          className={`border p-6 rounded-[2rem] flex flex-col items-center justify-center gap-4 shadow-sm transition-all duration-300 group relative overflow-hidden ${
+            hasCheckedInToday 
+              ? 'bg-brand-50 dark:bg-brand-900/20 border-brand-200 dark:border-brand-800 opacity-80' 
+              : 'bg-white dark:bg-slate-800 border-slate-100 dark:border-slate-700 hover:border-brand-200 dark:hover:border-brand-700 hover:shadow-md'
+          } disabled:cursor-not-allowed`}
         >
           <div className="absolute inset-0 bg-gradient-to-br from-brand-50/50 dark:from-brand-900/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity"></div>
-          <div className="w-14 h-14 rounded-full bg-brand-50 dark:bg-brand-900/30 flex items-center justify-center group-hover:scale-110 transition-transform duration-300 relative z-10 border border-brand-100 dark:border-brand-800">
-            <CheckCircle2 className="text-brand-600 dark:text-brand-400" size={28} strokeWidth={2} />
+          <div className={`w-14 h-14 rounded-full flex items-center justify-center transition-transform duration-300 relative z-10 border ${
+            hasCheckedInToday
+              ? 'bg-brand-500 text-white border-brand-500'
+              : 'bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-400 border-brand-100 dark:border-brand-800 group-hover:scale-110'
+          }`}>
+            {isCheckingIn ? (
+              <Loader2 className="animate-spin" size={28} />
+            ) : (
+              <CheckCircle2 size={28} strokeWidth={2} />
+            )}
           </div>
-          <span className="font-bold text-slate-700 dark:text-slate-200 text-sm relative z-10">Check-in Diário</span>
+          <span className="font-bold text-slate-700 dark:text-slate-200 text-sm relative z-10 text-center leading-tight">
+            {hasCheckedInToday ? 'Check-in Feito!' : 'Check-in Diário'}
+          </span>
         </motion.button>
         
         <Link to="/protocol" className="block">

@@ -19,6 +19,11 @@ export function Register() {
     setError(null);
 
     try {
+      // Check if using placeholder key
+      if (import.meta.env.VITE_SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY' || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase não configurado. Por favor, configure as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no painel de Secrets.');
+      }
+
       const { data, error } = await supabase.auth.signUp({
         email,
         password,
@@ -35,7 +40,11 @@ export function Register() {
       navigate('/');
     } catch (err: any) {
       console.error('Registration error:', err);
-      setError(err.message || 'Erro ao criar conta. Tente novamente.');
+      if (err.message?.includes('Supabase não configurado') || err.message?.includes('Invalid API key')) {
+        setError('Erro de configuração: As chaves do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não foram configuradas corretamente no painel de Secrets.');
+      } else {
+        setError(err.message || 'Erro ao criar conta. Tente novamente.');
+      }
     } finally {
       setIsLoading(false);
     }

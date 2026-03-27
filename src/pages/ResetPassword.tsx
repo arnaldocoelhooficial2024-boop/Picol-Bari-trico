@@ -16,6 +16,11 @@ export function ResetPassword() {
   useEffect(() => {
     const initializeSession = async () => {
       try {
+        // Check if using placeholder key
+        if (import.meta.env.VITE_SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY' || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+          throw new Error('Supabase não configurado. Por favor, configure as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no painel de Secrets.');
+        }
+
         // 1) CAPTURAR TOKEN CORRETAMENTE
         const hash = window.location.hash;
         
@@ -54,7 +59,11 @@ export function ResetPassword() {
         }
       } catch (err: any) {
         console.error('Erro de sessão:', err);
-        setError('Link inválido ou expirado');
+        if (err.message?.includes('Supabase não configurado') || err.message?.includes('Invalid API key')) {
+          setError('Erro de configuração: As chaves do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não foram configuradas corretamente no painel de Secrets.');
+        } else {
+          setError('Link inválido ou expirado');
+        }
         setIsSessionValid(false);
       } finally {
         setIsCheckingSession(false);
@@ -82,6 +91,11 @@ export function ResetPassword() {
     setError(null);
 
     try {
+      // Check if using placeholder key
+      if (import.meta.env.VITE_SUPABASE_ANON_KEY === 'YOUR_SUPABASE_ANON_KEY' || !import.meta.env.VITE_SUPABASE_ANON_KEY) {
+        throw new Error('Supabase não configurado. Por favor, configure as variáveis de ambiente VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY no painel de Secrets.');
+      }
+
       // 4) ATUALIZAR SENHA
       const { error: updateError } = await supabase.auth.updateUser({
         password: password
@@ -102,7 +116,11 @@ export function ResetPassword() {
 
     } catch (err: any) {
       console.error('Erro ao atualizar senha:', err);
-      setError(err.message || 'Erro ao redefinir senha');
+      if (err.message?.includes('Supabase não configurado') || err.message?.includes('Invalid API key')) {
+        setError('Erro de configuração: As chaves do Supabase (VITE_SUPABASE_URL e VITE_SUPABASE_ANON_KEY) não foram configuradas corretamente no painel de Secrets.');
+      } else {
+        setError(err.message || 'Erro ao redefinir senha');
+      }
     } finally {
       setIsLoading(false);
     }

@@ -59,7 +59,7 @@ export function Logo({ className = "w-48" }: { className?: string }) {
       </defs>
 
       {/* --- Glowing Popsicle --- */}
-      <g transform="translate(0, -20)">
+      <g transform="translate(0, 10)">
         {/* Popsicle Base Glow */}
         <path d="M 280 10 C 280 -10 320 -10 320 10 L 320 70 C 320 80 280 80 280 70 Z" fill="#FF4F7A" filter="url(#strongGlow)" opacity="0.5" />
         
@@ -84,8 +84,33 @@ export function Logo({ className = "w-48" }: { className?: string }) {
         </g>
       </g>
 
-      {/* --- BARIÁTRICO Text --- */}
-      <g transform="translate(300, 180)">
+      {/* --- Picolé Text (Top) --- */}
+      <g transform="translate(300, 170)">
+        {/* Shadow/Border */}
+        <text x="0" y="0" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="none" stroke="#ffffff" strokeWidth="14" strokeLinejoin="round" filter="url(#dropShadow)">Picolé</text>
+        <text x="0" y="4" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="#9E1636">Picolé</text>
+        
+        {/* Fill */}
+        <text x="0" y="0" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="url(#picoleGrad)">Picolé</text>
+        
+        {/* Inner Highlight */}
+        <text x="-1" y="-1" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.5">Picolé</text>
+      </g>
+
+      {/* --- Swoosh --- */}
+      <g transform="translate(0, 65)">
+        {/* Swoosh Shadow */}
+        <path d="M 80 210 Q 300 180 520 200 Q 300 195 80 210 Z" fill="#9E1636" transform="translate(0, 4)" />
+        {/* Swoosh Border */}
+        <path d="M 80 210 Q 300 180 520 200 Q 300 195 80 210 Z" fill="none" stroke="#ffffff" strokeWidth="4" />
+        {/* Swoosh Fill */}
+        <path d="M 80 210 Q 300 180 520 200 Q 300 195 80 210 Z" fill="url(#swooshGrad)" />
+        {/* Swoosh Highlight */}
+        <path d="M 85 208 Q 300 182 510 198 Q 300 190 85 208 Z" fill="#ffffff" opacity="0.4" />
+      </g>
+
+      {/* --- BARIÁTRICO Text (Bottom) --- */}
+      <g transform="translate(300, 260)">
         {/* 3D Extrusion Layers */}
         <text x="0" y="15" fontFamily="'Outfit', 'Arial Black', Impact, system-ui, sans-serif" fontSize="80" fontWeight="900" textAnchor="middle" fill="#9E1636">BARIÁTRICO</text>
         <text x="0" y="12" fontFamily="'Outfit', 'Arial Black', Impact, system-ui, sans-serif" fontSize="80" fontWeight="900" textAnchor="middle" fill="#C2224A">BARIÁTRICO</text>
@@ -101,31 +126,6 @@ export function Logo({ className = "w-48" }: { className?: string }) {
         
         {/* Inner Highlight for Glossy Effect */}
         <text x="0" y="-2" fontFamily="'Outfit', 'Arial Black', Impact, system-ui, sans-serif" fontSize="80" fontWeight="900" textAnchor="middle" fill="none" stroke="#ffffff" strokeWidth="2" opacity="0.6">BARIÁTRICO</text>
-      </g>
-
-      {/* --- Swoosh --- */}
-      <g transform="translate(0, 15)">
-        {/* Swoosh Shadow */}
-        <path d="M 80 210 Q 300 180 520 200 Q 300 195 80 210 Z" fill="#9E1636" transform="translate(0, 4)" />
-        {/* Swoosh Border */}
-        <path d="M 80 210 Q 300 180 520 200 Q 300 195 80 210 Z" fill="none" stroke="#ffffff" strokeWidth="4" />
-        {/* Swoosh Fill */}
-        <path d="M 80 210 Q 300 180 520 200 Q 300 195 80 210 Z" fill="url(#swooshGrad)" />
-        {/* Swoosh Highlight */}
-        <path d="M 85 208 Q 300 182 510 198 Q 300 190 85 208 Z" fill="#ffffff" opacity="0.4" />
-      </g>
-
-      {/* --- Picolé Text --- */}
-      <g transform="translate(300, 275)">
-        {/* Shadow/Border */}
-        <text x="0" y="0" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="none" stroke="#ffffff" strokeWidth="14" strokeLinejoin="round" filter="url(#dropShadow)">Picolé</text>
-        <text x="0" y="4" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="#9E1636">Picolé</text>
-        
-        {/* Fill */}
-        <text x="0" y="0" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="url(#picoleGrad)">Picolé</text>
-        
-        {/* Inner Highlight */}
-        <text x="-1" y="-1" fontFamily="'Dancing Script', 'Great Vibes', cursive" fontSize="76" fontWeight="700" textAnchor="middle" fill="none" stroke="#ffffff" strokeWidth="1" opacity="0.5">Picolé</text>
       </g>
     </svg>
   );
