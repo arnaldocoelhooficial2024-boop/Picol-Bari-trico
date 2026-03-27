@@ -14,6 +14,7 @@ import { Register } from './pages/Register';
 import { Profile } from './pages/Profile';
 import { Onboarding } from './pages/Onboarding';
 import { SOS } from './pages/SOS';
+import { Guide } from './pages/Guide';
 import { ProtectedRoute } from './components/ProtectedRoute';
 import { AcessoNegado } from './pages/AcessoNegado';
 import { ResetPassword } from './pages/ResetPassword';
@@ -37,6 +38,7 @@ export default function App() {
             <Route path="recipe" element={<Recipe />} />
             <Route path="bonus" element={<Bonus />} />
             <Route path="profile" element={<Profile />} />
+            <Route path="guide" element={<Guide />} />
           </Route>
         </Route>
       </Routes>

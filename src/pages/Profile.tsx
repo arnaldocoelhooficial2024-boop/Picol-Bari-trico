@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { motion } from 'motion/react';
-import { User, Settings, LogOut, Moon, Sun, Award, ChevronRight, Bell, Shield, HelpCircle, Check, Activity, Target, Scale, Ruler, Edit2 } from 'lucide-react';
+import { User, Settings, LogOut, Moon, Sun, Award, ChevronRight, Bell, Shield, HelpCircle, Check, Activity, Target, Scale, Ruler, Edit2, BookOpen } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, ReferenceLine } from 'recharts';
 
@@ -546,6 +546,21 @@ export function Profile() {
                 <Shield size={20} />
               </div>
               <span className="font-medium">Privacidade e Segurança</span>
+            </div>
+            <ChevronRight size={20} className="text-slate-400" />
+          </motion.button>
+
+          <motion.button 
+            whileHover={{ backgroundColor: isDarkMode ? 'rgba(51, 65, 85, 0.5)' : 'rgba(248, 250, 252, 1)' }}
+            whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/guide')}
+            className="w-full flex items-center justify-between p-5 transition-colors"
+          >
+            <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200">
+              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
+                <BookOpen size={20} />
+              </div>
+              <span className="font-medium">Como Usar o App</span>
             </div>
             <ChevronRight size={20} className="text-slate-400" />
           </motion.button>
