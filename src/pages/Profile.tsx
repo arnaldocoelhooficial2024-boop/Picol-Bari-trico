@@ -211,6 +211,25 @@ export function Profile() {
         </div>
       </motion.header>
 
+      {/* Guide Banner */}
+      <motion.div variants={itemVariants} className="mb-6">
+        <button 
+          onClick={() => navigate('/guide')} 
+          className="w-full bg-gradient-to-r from-brand-500 to-brand-600 rounded-3xl p-5 flex items-center justify-between text-white shadow-lg shadow-brand-500/20 hover:scale-[1.02] transition-transform"
+        >
+          <div className="flex items-center gap-4">
+            <div className="bg-white/20 p-3 rounded-2xl">
+              <BookOpen size={24} className="text-white" />
+            </div>
+            <div className="text-left">
+              <h3 className="font-bold text-lg leading-tight">Como usar o app</h3>
+              <p className="text-brand-100 text-sm mt-0.5">Aprenda a extrair o máximo</p>
+            </div>
+          </div>
+          <ChevronRight size={20} className="text-brand-200" />
+        </button>
+      </motion.div>
+
       {/* User Info Card */}
       <motion.div 
         variants={itemVariants}
@@ -546,21 +565,6 @@ export function Profile() {
                 <Shield size={20} />
               </div>
               <span className="font-medium">Privacidade e Segurança</span>
-            </div>
-            <ChevronRight size={20} className="text-slate-400" />
-          </motion.button>
-
-          <motion.button 
-            whileHover={{ backgroundColor: isDarkMode ? 'rgba(51, 65, 85, 0.5)' : 'rgba(248, 250, 252, 1)' }}
-            whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/guide')}
-            className="w-full flex items-center justify-between p-5 transition-colors"
-          >
-            <div className="flex items-center gap-3 text-slate-700 dark:text-slate-200">
-              <div className="w-10 h-10 rounded-xl bg-slate-100 dark:bg-slate-700 flex items-center justify-center text-slate-500 dark:text-slate-400">
-                <BookOpen size={20} />
-              </div>
-              <span className="font-medium">Como Usar o App</span>
             </div>
             <ChevronRight size={20} className="text-slate-400" />
           </motion.button>
